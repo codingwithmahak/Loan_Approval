@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Error | Loan Prediction</title>
+    <style>
+        body {
+            background: #011512;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .error-box {
+            background: rgba(255,255,255,0.08);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            border: 1px solid rgba(255,0,0,0.3);
+        }
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin: 20px 0;
+            color: #ddd;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, cyan, #00ff99);
+            color: black;
+            text-decoration: none;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-box">
+        <h1>⚠️ Error</h1>
+        <div class="message">{{ message }}</div>
+        <a href="/predict" class="btn">← Back to Prediction</a>
+        <a href="/" class="btn" style="background: transparent; border: 1px solid cyan; color: cyan; margin-left: 10px;">🏠 Home</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Loan Prediction</title>
+<link rel="stylesheet" href="/static/css/style.css">
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+}
+
+/* ===== GLOBAL NAV ===== */
+.global-nav{
+    position:fixed;
+    top:20px;
+    right:25px;
+    display:flex;
+    gap:10px;
+    z-index:3000;
+}
+.global-nav a{
+    padding:8px 16px;
+    font-size:13px;
+    border-radius:20px;
+    border:1px solid cyan;
+    background:rgba(0,255,255,0.12);
+    color:cyan;
+    text-decoration:none;
+    backdrop-filter:blur(10px);
+    transition:.3s;
+}
+.global-nav a:hover{
+    background:cyan;
+    color:black;
+    box-shadow:0 0 15px cyan;
+}
+
+/* ===== SCREEN ===== */
+.predict-screen{
+    width:100%;
+    height:100vh;
+    display:grid;
+    grid-template-columns: 1.2fr 1.8fr;
+}
+
+/* ===== LEFT PANEL ===== */
+.left-panel{
+    background:linear-gradient(135deg,#041b22,#000);
+    color:white;
+    padding:40px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+}
+
+.left-panel h1{
+    font-size:42px;
+    background:linear-gradient(90deg,cyan,#00ff99);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.left-panel p{
+    margin-top:15px;
+    font-size:15px;
+    opacity:.85;
+    max-width:420px;
+}
+
+/* MOVING GRID */
+.grid{
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(rgba(0,255,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,255,.05) 1px, transparent 1px);
+    background-size:60px 60px;
+    animation:moveGrid 20s linear infinite;
+    pointer-events:none;
+}
+@keyframes moveGrid{
+    from{background-position:0 0,0 0}
+    to{background-position:600px 600px,600px 600px}
+}
+
+/* FLOATING TAGS */
+.tags{
+    margin-top:40px;
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+.tag{
+    padding:8px 16px;
+    border-radius:20px;
+    background:rgba(0,255,255,.12);
+    border:1px solid cyan;
+    font-size:13px;
+    animation:float 4s ease-in-out infinite;
+}
+.tag:nth-child(2){animation-delay:1s}
+.tag:nth-child(3){animation-delay:2s}
+@keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-8px)}
+}
+
+/* ===== RIGHT PANEL ===== */
+.right-panel{
+    background:radial-gradient(circle at top,#0f2027,#000);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+/* FORM CARD */
+.form-card{
+    width:100%;
+    max-width:520px;
+    padding:35px;
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+    border-radius:25px;
+    box-shadow:0 0 60px rgba(0,255,255,.25);
+    animation:fadeUp .8s ease;
+}
+@keyframes fadeUp{
+    from{opacity:0;transform:translateY(30px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+.form-card h2{
+    text-align:center;
+    margin-bottom:20px;
+    background:linear-gradient(90deg,cyan,#00ff99);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+/* IMPROVED FORM GRID */
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 12px;
+    color: #aaa;
+    margin-left: 5px;
+}
+
+.form-group input, 
+.form-group select {
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    background:rgba(0,0,0,.6);
+    color:white;
+    outline:none;
+    font-size: 14px;
+}
+
+.form-group select {
+    cursor: pointer;
+}
+
+.form-group select option {
+    background: #0f2027;
+    color: white;
+}
+
+/* FULL WIDTH */
+.full{
+    grid-column:1/3;
+}
+
+/* PREDICT BUTTON */
+.predict-btn{
+    margin-top:20px;
+    width:100%;
+    padding:14px;
+    border-radius:30px;
+    border:none;
+    background:linear-gradient(90deg,cyan,#00ff99);
+    color:black;
+    font-weight:bold;
+    font-size:16px;
+    cursor:pointer;
+    transition:.3s;
+}
+.predict-btn:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 30px cyan;
+}
+
+.predict-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* DEMO BUTTONS */
+.demo-group{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+.demo-group button{
+    flex:1;
+    padding:10px;
+    border-radius:20px;
+    border:1px solid cyan;
+    background:transparent;
+    color:cyan;
+    cursor:pointer;
+    transition:.3s;
+    font-size: 14px;
+}
+.demo-group button:hover{
+    background:cyan;
+    color:black;
+}
+
+/* RISK METER */
+.risk-meter {
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+}
+
+.risk-bar {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.risk-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #00ff00, #ff9900, #ff0000);
+    transition: width 0.5s ease;
+}
+
+.risk-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* VALIDATION MESSAGE */
+.validation-message {
+    grid-column: 1/3;
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 8px;
+    margin-top: 5px;
+    display: none;
+}
+
+.validation-message.error {
+    background: rgba(255,0,0,0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(255,0,0,0.3);
+    display: block;
+}
+
+.validation-message.success {
+    background: rgba(0,255,0,0.1);
+    color: #00ff99;
+    border: 1px solid rgba(0,255,0,0.3);
+    display: block;
+}
+
+/* LOADING SPINNER */
+.loading {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.spinner {
+    border: 3px solid rgba(0,255,255,0.3);
+    border-top: 3px solid cyan;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+
+<body>
+
+<!-- GLOBAL NAV -->
+<div class="global-nav">
+    <a href="/">Home</a>
+    <a href="/about">Workflow</a>
+    <a href="/contact">Team</a>
+</div>
+
+<div class="predict-screen">
+
+<!-- LEFT -->
+<div class="left-panel">
+    <div class="grid"></div>
+
+    <h1>AI Loan Decision</h1>
+    <p>
+        This intelligent system evaluates applicant details using
+        a trained Machine Learning model to predict loan approval
+        instantly and fairly.
+    </p>
+
+    <div class="tags">
+        <div class="tag">✔ SVM Model</div>
+        <div class="tag">✔ Bias Controlled</div>
+        <div class="tag">✔ Real-time Prediction</div>
+        <div class="tag">✔ 83% Accuracy</div>
+        <div class="tag">✔ Explainable AI</div>
+        <div class="tag">✔ Instant Results</div>
+    </div>
+</div>
+
+<!-- RIGHT -->
+<div class="right-panel">
+
+<div class="form-card">
+<h2>Applicant Details</h2>
+
+<form action="/result" method="post" id="loanForm" onsubmit="return validateForm()">
+
+<div class="form-grid">
+    <!-- Gender -->
+    <div class="form-group">
+        <label for="Gender">Gender</label>
+        <select id="Gender" name="Gender" required>
+            <option value="">Select Gender</option>
+            <option value="1">Male</option>
+            <option value="0">Female</option>
+        </select>
+    </div>
+
+    <!-- Married -->
+    <div class="form-group">
+        <label for="Married">Marital Status</label>
+        <select id="Married" name="Married" required>
+            <option value="">Select Status</option>
+            <option value="1">Married</option>
+            <option value="0">Not Married</option>
+        </select>
+    </div>
+
+    <!-- Dependents -->
+    <div class="form-group">
+        <label for="Dependents">Number of Dependents</label>
+        <select id="Dependents" name="Dependents" required>
+            <option value="">Select Dependents</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3+</option>
+        </select>
+    </div>
+
+    <!-- Education -->
+    <div class="form-group">
+        <label for="Education">Education</label>
+        <select id="Education" name="Education" required>
+            <option value="">Select Education</option>
+            <option value="1">Graduate</option>
+            <option value="0">Not Graduate</option>
+        </select>
+    </div>
+
+    <!-- Self Employed -->
+    <div class="form-group">
+        <label for="Self_Employed">Employment Type</label>
+        <select id="Self_Employed" name="Self_Employed" required>
+            <option value="">Select Employment</option>
+            <option value="0">Salaried</option>
+            <option value="1">Self Employed</option>
+        </select>
+    </div>
+
+    <!-- Credit History -->
+    <div class="form-group">
+        <label for="Credit_History">Credit History</label>
+        <select id="Credit_History" name="Credit_History" required>
+            <option value="">Select Credit History</option>
+            <option value="1">Good (No defaults)</option>
+            <option value="0">Poor (Has defaults)</option>
+        </select>
+    </div>
+
+    <!-- Applicant Income -->
+    <div class="form-group">
+        <label for="ApplicantIncome">Monthly Income (₹)</label>
+        <input type="number" id="ApplicantIncome" name="ApplicantIncome" 
+               placeholder="e.g., 50000" min="10000" max="1000000" step="1000" required>
+    </div>
+
+    <!-- Co-applicant Income -->
+    <div class="form-group">
+        <label for="CoapplicantIncome">Co-applicant Income (₹)</label>
+        <input type="number" id="CoapplicantIncome" name="CoapplicantIncome" 
+               placeholder="e.g., 30000" min="0" max="1000000" step="1000" value="0">
+    </div>
+
+    <!-- Loan Amount -->
+    <div class="form-group">
+        <label for="LoanAmount">Loan Amount (₹)</label>
+        <input type="number" id="LoanAmount" name="LoanAmount" 
+               placeholder="e.g., 500000" min="10000" max="10000000" step="10000" required>
+    </div>
+
+    <!-- Loan Term -->
+    <div class="form-group">
+        <label for="Loan_Amount_Term">Loan Term (months)</label>
+        <select id="Loan_Amount_Term" name="Loan_Amount_Term" required>
+            <option value="">Select Term</option>
+            <option value="12">12 months</option>
+            <option value="24">24 months</option>
+            <option value="36">36 months</option>
+            <option value="60">60 months</option>
+            <option value="120">120 months</option>
+            <option value="180">180 months</option>
+            <option value="240">240 months</option>
+            <option value="360">360 months</option>
+        </select>
+    </div>
+
+    <!-- Property Area -->
+    <div class="form-group full">
+        <label for="Property_Area">Property Area Type</label>
+        <select id="Property_Area" name="Property_Area" required>
+            <option value="">Select Area Type</option>
+            <option value="0">Urban</option>
+            <option value="1">Semi-Urban</option>
+            <option value="2">Rural</option>
+        </select>
+    </div>
+
+    <!-- Validation Message -->
+    <div id="validationMessage" class="validation-message"></div>
+
+</div>
+
+<!-- Risk Meter -->
+<div class="risk-meter">
+    <div class="risk-label">
+        <span>Low Risk</span>
+        <span id="riskPercentage">0%</span>
+        <span>High Risk</span>
+    </div>
+    <div class="risk-bar">
+        <div class="risk-fill" id="riskFill"></div>
+    </div>
+</div>
+
+<button type="submit" class="predict-btn" id="predictBtn">
+    <span id="btnText">🚀 Predict Loan Status</span>
+    <div class="loading" id="loadingSpinner">
+        <div class="spinner"></div>
+        Analyzing...
+    </div>
+</button>
+
+<div class="demo-group">
+    <button type="button" onclick="fillApproveDemo()">✓ Approve Demo</button>
+    <button type="button" onclick="fillRejectDemo()">✗ Reject Demo</button>
+    <button type="button" onclick="clearForm()">🔄 Clear Form</button>
+</div>
+
+</form>
+
+</div>
+</div>
+
+</div>
+
+<script>
+// Form validation
+function validateForm() {
+    const form = document.getElementById('loanForm');
+    const message = document.getElementById('validationMessage');
+    const income = parseFloat(document.getElementById('ApplicantIncome').value) || 0;
+    const loanAmount = parseFloat(document.getElementById('LoanAmount').value) || 0;
+    const coIncome = parseFloat(document.getElementById('CoapplicantIncome').value) || 0;
+    const totalIncome = income + coIncome;
+    
+    // Show loading
+    document.getElementById('btnText').style.display = 'none';
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('predictBtn').disabled = true;
+    
+    // Check loan-to-income ratio
+    if (loanAmount > totalIncome * 20) {
+        message.textContent = 'Warning: Loan amount is very high compared to your income.';
+        message.className = 'validation-message error';
+        return false;
+    }
+    
+    // Check minimum income
+    if (income < 15000) {
+        message.textContent = 'Note: Monthly income is below typical minimum requirements.';
+        message.className = 'validation-message warning';
+    } else {
+        message.textContent = 'All inputs look good! Processing your request...';
+        message.className = 'validation-message success';
+    }
+    
+    return true;
+}
+
+// Real-time risk calculation
+function calculateRisk() {
+    const income = parseFloat(document.getElementById('ApplicantIncome').value) || 0;
+    const coIncome = parseFloat(document.getElementById('CoapplicantIncome').value) || 0;
+    const loanAmount = parseFloat(document.getElementById('LoanAmount').value) || 0;
+    const loanTerm = parseInt(document.getElementById('Loan_Amount_Term').value) || 360;
+    const creditHistory = parseInt(document.getElementById('Credit_History').value) || 0;
+    
+    let risk = 50; // Base risk
+    
+    if (loanAmount > 0 && income > 0) {
+        // Calculate debt-to-income ratio
+        const totalIncome = income + coIncome;
+        const monthlyIncome = totalIncome;
+        const monthlyLoanPayment = loanAmount / (loanTerm / 12);
+        const dti = (monthlyLoanPayment / monthlyIncome) * 100;
+        
+        // Adjust risk based on factors
+        if (dti > 40) risk += 30;
+        else if (dti > 30) risk += 20;
+        else if (dti > 20) risk += 10;
+        
+        if (creditHistory === 0) risk += 25;
+        if (income < 25000) risk += 15;
+        if (loanAmount > 1000000) risk += 10;
+        
+        // Cap risk between 5-95%
+        risk = Math.max(5, Math.min(95, risk));
+    }
+    
+    // Update risk meter
+    document.getElementById('riskPercentage').textContent = risk + '%';
+    document.getElementById('riskFill').style.width = risk + '%';
+    
+    // Change color based on risk
+    if (risk < 30) {
+        document.getElementById('riskFill').style.background = 'linear-gradient(90deg, #00ff00, #00ff00)';
+    } else if (risk < 60) {
+        document.getElementById('riskFill').style.background = 'linear-gradient(90deg, #00ff00, #ff9900)';
+    } else {
+        document.getElementById('riskFill').style.background = 'linear-gradient(90deg, #ff9900, #ff0000)';
+    }
+}
+
+// Demo data functions
+function fillApproveDemo() {
+    document.getElementById('Gender').value = '1';
+    document.getElementById('Married').value = '1';
+    document.getElementById('Dependents').value = '0';
+    document.getElementById('Education').value = '1';
+    document.getElementById('Self_Employed').value = '0';
+    document.getElementById('Credit_History').value = '1';
+    document.getElementById('ApplicantIncome').value = '50000';
+    document.getElementById('CoapplicantIncome').value = '30000';
+    document.getElementById('LoanAmount').value = '500000';
+    document.getElementById('Loan_Amount_Term').value = '360';
+    document.getElementById('Property_Area').value = '1';
+    calculateRisk();
+    showMessage('✅ Demo data loaded (High approval chance)', 'success');
+}
+
+function fillRejectDemo() {
+    document.getElementById('Gender').value = '0';
+    document.getElementById('Married').value = '0';
+    document.getElementById('Dependents').value = '2';
+    document.getElementById('Education').value = '0';
+    document.getElementById('Self_Employed').value = '1';
+    document.getElementById('Credit_History').value = '0';
+    document.getElementById('ApplicantIncome').value = '15000';
+    document.getElementById('CoapplicantIncome').value = '0';
+    document.getElementById('LoanAmount').value = '800000';
+    document.getElementById('Loan_Amount_Term').value = '60';
+    document.getElementById('Property_Area').value = '2';
+    calculateRisk();
+    showMessage('❌ Demo data loaded (High rejection chance)', 'error');
+}
+
+function clearForm() {
+    document.getElementById('loanForm').reset();
+    document.getElementById('validationMessage').className = 'validation-message';
+    document.getElementById('validationMessage').textContent = '';
+    calculateRisk();
+    showMessage('Form cleared!', 'success');
+}
+
+function showMessage(text, type) {
+    const message = document.getElementById('validationMessage');
+    message.textContent = text;
+    message.className = `validation-message ${type}`;
+    setTimeout(() => {
+        message.className = 'validation-message';
+        message.textContent = '';
+    }, 3000);
+}
+
+// Add event listeners for live calculation
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = ['ApplicantIncome', 'CoapplicantIncome', 'LoanAmount', 'Loan_Amount_Term', 'Credit_History'];
+    
+    inputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', calculateRisk);
+            input.addEventListener('change', calculateRisk);
+        }
+    });
+    
+    // Initial calculation
+    calculateRisk();
+});
+
+// Form submission handler
+document.getElementById('loanForm').addEventListener('submit', function() {
+    // Form is being submitted, let the server handle it
+    setTimeout(() => {
+        // Reset button after 3 seconds in case of error
+        document.getElementById('btnText').style.display = 'inline';
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('predictBtn').disabled = false;
+    }, 3000);
+});
+</script>
+
+</body>
+</html>

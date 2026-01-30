@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction History | AI Loan System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #011512; 
+            color: white; 
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Navigation */
+        .nav { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            color: cyan;
+            text-decoration: none;
+            padding: 10px 20px;
+            border: 1px solid cyan;
+            border-radius: 25px;
+            transition: 0.3s;
+        }
+        .nav a:hover {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 10px cyan;
+        }
+        
+        /* Header */
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 {
+            font-size: 36px;
+            background: linear-gradient(90deg, cyan, #00ff99);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .stat-box .number {
+            font-size: 24px;
+            font-weight: bold;
+            color: cyan;
+            margin-top: 10px;
+        }
+        
+        /* Predictions List */
+        .prediction-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid cyan;
+        }
+        .prediction-card.approved { border-left-color: #00ff99; }
+        .prediction-card.rejected { border-left-color: #ff4d4d; }
+        
+        .prediction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .result-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .approved-badge {
+            background: rgba(0, 255, 153, 0.2);
+            color: #00ff99;
+            border: 1px solid #00ff99;
+        }
+        .rejected-badge {
+            background: rgba(255, 77, 77, 0.2);
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+        }
+        
+        /* Buttons */
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+        .btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, cyan, #00ff99);
+            color: black;
+        }
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px cyan;
+        }
+        .btn-danger {
+            background: transparent;
+            color: #ff4d4d;
+            border: 1px solid #ff4d4d;
+        }
+        .btn-danger:hover {
+            background: rgba(255, 77, 77, 0.1);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+        .empty-state h3 {
+            color: cyan;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav">
+            <a href="/">🏠 Home</a>
+            <a href="/predict">📊 New Prediction</a>
+            <a href="/about">🔍 Workflow</a>
+            <a href="/contact">👥 Team</a>
+        </div>
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>📋 Your Prediction History</h1>
+            <p>All your past loan predictions in one place</p>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats">
+            <div class="stat-box">
+                <div>Total Predictions</div>
+                <div class="number" id="totalCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Approved</div>
+                <div class="number" id="approvedCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Rejected</div>
+                <div class="number" id="rejectedCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Approval Rate</div>
+                <div class="number" id="approvalRate">0%</div>
+            </div>
+        </div>
+        
+        <!-- Predictions List -->
+        <div id="predictionsList">
+            {% if predictions %}
+                {% for pred in predictions %}
+                <div class="prediction-card {{ 'approved' if pred.result == 'APPROVED' else 'rejected' }}">
+                    <div class="prediction-header">
+                        <div>
+                            <h3>₹{{ "{:,.0f}".format(pred.loan_amount) }} Loan</h3>
+                            <small>{{ pred.timestamp }}</small>
+                        </div>
+                        <span class="result-badge {{ 'approved-badge' if pred.result == 'APPROVED' else 'rejected-badge' }}">
+                            {{ pred.result }}
+                        </span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                        <div>
+                            <strong>Applicant Income:</strong><br>
+                            ₹{{ "{:,.0f}".format(pred.applicant_income) }}
+                        </div>
+                        <div>
+                            <strong>Co-applicant Income:</strong><br>
+                            ₹{{ "{:,.0f}".format(pred.coapplicant_income) }}
+                        </div>
+                        <div>
+                            <strong>Total Income:</strong><br>
+                            ₹{{ "{:,.0f}".format(pred.total_income) }}
+                        </div>
+                        <div>
+                            <strong>Confidence:</strong><br>
+                            {{ pred.confidence }}%
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; color: #aaa; font-size: 14px;">
+                        👤 {{ pred.gender }} • {{ pred.married }} • {{ pred.dependents }} Dependents
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h3>No predictions yet! 🚀</h3>
+                    <p>Make your first loan prediction to see it here.</p>
+                    <a href="/predict">
+                        <button class="btn btn-primary" style="margin-top: 20px;">
+                            Make First Prediction
+                        </button>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="buttons">
+            <a href="/predict">
+                <button class="btn btn-primary">📊 New Prediction</button>
+            </a>
+            {% if predictions %}
+            <button class="btn btn-danger" onclick="clearHistory()">🗑️ Clear All History</button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        // Load statistics
+        fetch('/api/stats')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('totalCount').textContent = data.total;
+                document.getElementById('approvedCount').textContent = data.approved;
+                document.getElementById('rejectedCount').textContent = data.rejected;
+                document.getElementById('approvalRate').textContent = data.approval_rate + '%';
+            });
+        
+        // Clear history function
+        function clearHistory() {
+            if(confirm('Are you sure you want to clear ALL your prediction history? This cannot be undone!')) {
+                fetch('/clear_history', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if(data.success) {
+                        alert(`✅ Cleared ${data.deleted} predictions!`);
+                        location.reload();
+                    } else {
+                        alert('❌ Failed to clear history');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
